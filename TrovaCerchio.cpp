@@ -54,6 +54,7 @@ int leggeParametriCalibrazione(char *nomefile)
         camera          numero della telecamera
         destinazione    nome della seriale cui inviare i dati. Se NULL non invia i dati
         immON           se true mostra il cerchio trovato
+
     Questa versione riceve la richiesta dati (R) dalla stessa seriale su cui li inviaha
 */
 
