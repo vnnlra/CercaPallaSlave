@@ -104,9 +104,6 @@ int main(int argc, char* argv[])
                 break;
             case 'c':
 
-
-
-
                 /**Apre nano per editare il file  configurazione*/
                 sprintf(comando,"nano %s",nomeFileConfHough);
                 system(comando);

@@ -5,7 +5,7 @@
 using namespace std;
 
 /**
-    Parametri globali per i nomi dei file di configurazione
+    Parametro globale per il nome dei file di configurazione della ricerca
 
 */
 char nomeFileConfHough[256];
@@ -14,7 +14,7 @@ char nomeFileConfHough[256];
 PARAMETRI GLOBALI DEL CERCHIO: INVIATI QUANDO RICHIESTI SULLA SERIALE
 */
 int x=-1,y=-1,r=-1;
-/// Questi sono i parametri più importanti
+/// Questi sono i parametri più importanti: edgeThreshold e accThreshold
 int edgeThreshold=80; //param1
 /**
 soglia sull'accumulatore nella trasformata di hough. Ogni punto nel piano di Hough rappresenta una retta,
@@ -26,7 +26,7 @@ int accInvRatioResolution=1;
 int minDistBetweenCenters=10;
 ///Altri parametri
 int nBlur=3; /// dimensione del filtro di blur gaussiano
-///Parametri sulla geometria del cerchio
+///Parametri dimensioni dei cerchi
 int minRaggio=120, maxRaggio=140;
 
 int leggeParametriCalibrazione(char *nomefile)
@@ -46,13 +46,10 @@ int leggeParametriCalibrazione(char *nomefile)
     return 0;
 }
 
-//prototipi della funzioni definite in SerialeIO.cpp
-//int invia3Interi(char *dest,int x, int y, int r);
-//int riceviRichiesta(int fd);
-
 /**
     Cerca UN cerchio
-    Esegue il loop di acquisizione dell'immagine e cerca un cerchio
+    Esegue il loop di acquisizione dell'immagine e cerca un cerchio le cui dimensioni sono
+    comprese tra minRaggio e maxRaggio
     Parametri IN:
         camera          numero della telecamera
         destinazione    nome della seriale cui inviare i dati. Se NULL non invia i dati
@@ -60,13 +57,12 @@ int leggeParametriCalibrazione(char *nomefile)
     Questa versione riceve la richiesta dati (R) dalla stessa seriale su cui li inviaha
 */
 
-
 int CercaUnCerchio(int camera, char *destinazione, bool immON)
 {
     VideoCapture cap(camera); // open the video file for reading
     Mat frame,frame_grigio,frame_edges;
     char *sorgente;
-
+    char stringa[25];
     int fd = 0;
 
     int baudrate = B9600;  // default
@@ -110,7 +106,7 @@ int CercaUnCerchio(int camera, char *destinazione, bool immON)
         GaussianBlur( frame_grigio, frame_grigio, Size(nBlur, nBlur), 2, 2 );
 
         vector <Vec3f> circles;
-        if(sorgente==NULL){
+        if(sorgente==NULL){ ///modalita` senza invio dati sulla seriale - Si usa per calibrare i parametri di ricerca
 
             /// Apply the Hough Transform to find the circles
             HoughCircles( frame_grigio, circles, CV_HOUGH_GRADIENT, accInvRatioResolution,minDistBetweenCenters, edgeThreshold, accThreshold, 0, 0 );
@@ -128,22 +124,21 @@ int CercaUnCerchio(int camera, char *destinazione, bool immON)
 
                 Point center(xl, yl);
 
+                sprintf(stringa,"<%d-%d-%d>",xl,yl,rl);
 
                 if(rl<=maxRaggio && rl>=minRaggio)  ///filtro sulla dimensione del cerchio trovato
                 {
-                    x=xl;
-                    y=yl;
-                    r=rl;
+
                     if(immON)
                     {
                         circle( frame, center, 3, Scalar(0,255,0), -1, 8, 0 );
-                        circle( frame, center, r, Scalar(0,0,255), 2, 8, 0 );
+                        circle( frame, center, rl, Scalar(0,0,255), 2, 8, 0 );
+                        putText(frame,stringa,center,FONT_HERSHEY_SIMPLEX, 1, Scalar(255, 255, 0), 2);
                     }
-                    cout << "<"<< x <<"-"<< y <<"-"<< r <<">"<<endl;
                 }
             }
         }
-        else{
+        else{ //modalita` operativa
 
             if(riceviRichiesta(fd)==0)
             {
@@ -168,6 +163,7 @@ int CercaUnCerchio(int camera, char *destinazione, bool immON)
                             Point center(x, y);
                             circle( frame, center, 3, Scalar(0,255,0), -1, 8, 0 );
                             circle( frame, center, r, Scalar(0,0,255), 2, 8, 0 );
+                            putText(frame,stringa,center,FONT_HERSHEY_SIMPLEX, 1, Scalar(255, 255, 0), 2);
                         }
                         cout << "Richiesta ricevuta invio " ;
                         cout << "<"<< x <<"-"<< y <<"-"<< r <<">"<<endl;
