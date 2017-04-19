@@ -161,6 +161,7 @@ int CercaUnCerchio(int camera, char *destinazione, bool immON)
                     {
                         if(immON)
                         {
+                            sprintf(stringa,"<%d-%d-%d>",x,y,r);
                             Point center(x, y);
                             circle( frame, center, 3, Scalar(0,255,0), -1, 8, 0 );
                             circle( frame, center, r, Scalar(0,0,255), 2, 8, 0 );
